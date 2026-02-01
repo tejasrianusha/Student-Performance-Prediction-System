@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --indigo: #4f46e5; --rose: #e11d48; --teal: #0d9488; --amber: #d97706; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto 25px; }
+        .header { font-size: 1.6rem; font-weight: 800; color: var(--indigo); margin: 0; }
+        #clock { font-size: 0.9rem; color: #4b5563; font-weight: bold; background: #fff; padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; max-width: 1200px; margin: auto; }
+        .card { background: #fff; border-radius: 15px; padding: 20px; border: 1px solid #e5e7eb; transition: 0.3s; position: relative; overflow: hidden; height: 180px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 10px 0; padding-bottom: 8px; border-bottom: 2px solid #f3f4f6; }
+        .row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 0.9rem; }
+        .label { color: #6b7280; font-weight: 500; } 
+        .val { font-weight: 700; color: #111827; }
+        .c-indigo h3 { color: var(--indigo); border-color: #e0e7ff; }
+        .c-rose h3 { color: var(--rose); border-color: #ffe4e6; }
+        .c-teal h3 { color: var(--teal); border-color: #ccfbf1; }
+        .alert { font-size: 0.72rem; font-weight: 800; padding: 4px 8px; border-radius: 5px; color: white; display: inline-block; margin-top: auto; align-self: flex-start; }
+        .bg-red { background: var(--rose); }
+        .btn-row { grid-column: 1/-1; display: flex; justify-content: center; gap: 15px; margin-top: 30px; }
+        .btn { padding: 12px 25px; border-radius: 10px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem; }
+        canvas { max-height: 100px !important; width: 100% !important; }
+        .small-text { font-size: 0.7rem; color: #cbd5e1; font-style: italic; margin-top: 5px; }
+    </style>
+</head>
+<body onload="startTime()">
+
+    <div class="top-bar">
+        <h1 class="header">STUDENT PERFORMANCE <span style="color:#111827">PREDICTION SYSTEM</span></h1>
+        <div id="clock"></div>
+    </div>
+
+    <div class="grid">
+        <div class="card c-indigo">
+            <h3>👤 Basic Profile</h3>
+            <div>
+                <div class="row"><span class="label">Name</span> <span class="val">{{ s.name }}</span></div>
+                <div class="row"><span class="label">Roll</span> <span class="val">{{ s.roll }}</span></div>
+                <div class="row"><span class="label">Attendance</span> 
+                    {% if s.attendance < 75 %}
+                    <span class="val" style="color: red;">{{ s.attendance }}%</span>
+                    {% else %}
+                    <span class="val" style="color: green;">{{ s.attendance }}%</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if s.attendance < 75 %}<span class="alert bg-red">LOW ATTENDANCE ALERT</span>{% endif %}
+        </div>
+
+        <div class="card c-teal">
+            <h3>📜 10th Record</h3>
+            <div>
+                <div class="row"><span class="label">Marks</span> <span class="val">{{ s.m10 }}%</span></div>
+                <div class="row"><span class="label">Grade</span> <span class="val">{{ s.g10 }}</span></div>
+                <div class="row"><span class="label">Year</span> <span class="val">{{ s.p10 }}</span></div>
+            </div>
+        </div>
+
+        <div class="card c-teal">
+            <h3>🎓 Intermediate</h3>
+            <div>
+                <div class="row"><span class="label">Group</span> <span class="val">{{ s.inter_group }}</span></div>
+                <div class="row"><span class="label">Percentage</span> <span class="val">{{ s.mInter }}%</span></div>
+                <div class="row"><span class="label">Grade</span> <span class="val">{{ s.inter_grade }}</span></div>
+            </div>
+        </div>
+
+        <div class="card c-indigo">
+            <h3>💻 BCA Degree</h3>
+            <div>
+                <div class="row"><span class="label">Current Marks</span> <span class="val">{{ s.deg_marks }}%</span></div>
+                <div class="row"><span class="label">Final Grade</span> <span class="val">{{ s.deg_grade }}</span></div>
+                <div class="row"><span class="label">Status</span> <span class="val">{{ s.status }}</span></div>
+            </div>
+        </div>
+
+        <div class="card c-rose">
+            <h3>📅 Critical Deadlines</h3>
+            <div>
+                <div class="row"><span class="label">Next Exam</span> <span class="val" style="color:var(--rose)">{{ s.exam_date }}</span></div>
+                <div class="row"><span class="label">Assignment Due</span> <span class="val" style="color:var(--rose)">{{ s.last_date }}</span></div>
+            </div>
+            <span class="alert bg-red">SUBMIT BEFORE DEADLINE</span>
+        </div>
+
+        <div class="card" style="background: var(--indigo); color: white;">
+            <h3 style="color: white; border-color: rgba(255,255,255,0.2);">🤖 Prediction</h3>
+            <div>
+                <div class="row"><span>Status</span> <span class="val" style="color:white;">{{ prediction }}</span></div>
+                <div class="row"><span>Performance</span> <span class="val" style="color:white;">Excellent</span></div>
+                <div class="row"><span>Overall</span> <span class="val" style="color:white;">98.4%</span></div>
+                <div class="small-text">Suggestion: Focus on advanced Java modules.</div>
+            </div>
+        </div>
+
+        <div class="card" id="graph-card" data-m10="{{ s.m10 }}" data-minter="{{ s.mInter }}" data-mdeg="{{ s.deg_marks }}">
+            <h3>📈 Growth Graph</h3>
+            <canvas id="marksChart"></canvas>
+        </div>
+
+        <div class="card">
+            <h3>🏆 Class Toppers</h3>
+            <div style="overflow-y: auto;">
+                {% for r in top_5 %}
+                <div class="row"><span>{{ r.name }}</span> <span class="val" style="color:var(--amber)">{{ r.deg_marks }}%</span></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="btn-row">
+        <a href="/export_excel" class="btn" style="background: #10b981;">Export Excel</a>
+        <a href="/download_pdf/{{ s.roll }}" class="btn" style="background: var(--indigo);">Download PDF Report</a>
+    </div>
+
+    <script>
+        function startTime() {
+            const clockEl = document.getElementById('clock');
+            if (clockEl) clockEl.innerHTML = new Date().toLocaleString();
+            setTimeout(startTime, 1000);
+        }
+
+        const gCard = document.getElementById('graph-card');
+        const chartData = [
+            parseFloat(gCard.dataset.m10), 
+            parseFloat(gCard.dataset.minter), 
+            parseFloat(gCard.dataset.mdeg)
+        ];
+
+        new Chart(document.getElementById('marksChart'), {
+            type: 'line',
+            data: { 
+                labels: ['10th', 'Inter', 'BCA'], 
+                datasets: [{ 
+                    label: 'Marks %', 
+                    data: chartData, 
+                    borderColor: '#4f46e5', 
+                    tension: 0.3,
+                    fill: false
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+</body>
+</html>
